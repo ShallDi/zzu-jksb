@@ -26,6 +26,6 @@ class JksbApplicationTests {
 
     @Test
     void contextLoads() {
-//        autoJksbService.autoSb();
+        autoJksbService.autoSb();
     }
 }

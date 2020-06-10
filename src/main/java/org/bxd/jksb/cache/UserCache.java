@@ -19,7 +19,7 @@ public class UserCache {
         return userMap.get(user);
     }
 
-    public Map getAll() {
+    public Map<String, User> getAll() {
         return userMap;
     }
 }

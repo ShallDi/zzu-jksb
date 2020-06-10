@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -28,18 +29,32 @@ public class JksbHttpUtils {
 
     private static final String SID = "sid";
 
+    private static final String LOGIN_URL = "https://jksb.v.zzu.edu.cn/vls6sss/zzujksb.dll/login";
+
+    private static final String JKSB_URL = "https://jksb.v.zzu.edu.cn/vls6sss/zzujksb.dll/jksb";
+
     @Autowired
     private RestTemplateBuilder restTemplateBuilder;
 
     public Map<String, String> login(String usr, String pwd) {
-        return getLoginCredentials(restTemplateBuilder.build().postForObject("https://jksb.v.zzu.edu.cn/vls6sss/zzujksb.dll/login", createLoginHttpEntity(usr, pwd), String.class));
+        return getLoginCredentials(restTemplateBuilder.build().postForObject(LOGIN_URL, createLoginHttpEntity(usr, pwd), String.class));
+    }
+
+    public String autoSelectSbType(Map<String, String> map) {
+        String result = restTemplateBuilder.build().postForObject(JKSB_URL, createSbTypeHttpEntity(map.get(PTOPID), map.get(SID)), String.class);
+        return result;
     }
 
     public String autoSb(Map<String, String> map, String address) {
-        String result = getReturnInfo(
-                restTemplateBuilder.build().postForObject("https://jksb.v.zzu.edu.cn/vls6sss/zzujksb.dll/jksb",
-                        createJksbHttpEntity(map.get(PTOPID), map.get(SID), address), String.class));
-        log.info("Date:{}, autoSb result:{}", new Date(), result);
+        String html = restTemplateBuilder.build().postForObject(JKSB_URL, createJksbHttpEntity(map.get(PTOPID), map.get(SID), address), String.class);
+        log.info("Date:{}, AutoJksb Result Html: {}", new Date(), html);
+        String result = null;
+        try {
+            result = getReturnInfo(html);
+        } catch (Exception e) {
+            log.warn("Exception: ", e.getMessage());
+            result = html;
+        }
         return result;
     }
 
@@ -75,6 +90,17 @@ public class JksbHttpUtils {
             return true;
         }
         return false;
+    }
+
+    private HttpEntity createSbTypeHttpEntity(String ptopid, String sid) {
+        MultiValueMap<String, String> requestMap= new LinkedMultiValueMap<String, String>();
+        requestMap.add("day6", "b");
+        requestMap.add("did", "1");
+        requestMap.add("door","");
+        requestMap.add("men6","");
+        requestMap.add("ptopid", ptopid);
+        requestMap.add("sid", sid);
+        return new HttpEntity(requestMap,null);
     }
 
     private HttpEntity createLoginHttpEntity(String usr, String pwd) {

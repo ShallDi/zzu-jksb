@@ -10,8 +10,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.jws.soap.SOAPBinding;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
 
 @Component
 @EnableScheduling
@@ -37,8 +39,13 @@ public class AutoJksbService {
     @Scheduled(cron = "0 34 4 * * ?")
     public void autoSb() {
         userCache.getAll().forEach((k, v) -> {
-            User temp = (User) v;
-            sbResultCache.setResult(temp.getName(), sdf.format(new Date()) + " -> " + jksbHttpUtils.autoSb(jksbHttpUtils.login(temp.getCount(), temp.getPassword()), temp.getAddress()));
+            try {
+                Map<String, String> loginCredentials =  jksbHttpUtils.login(v.getCount(), v.getPassword());
+                jksbHttpUtils.autoSelectSbType(loginCredentials);
+                sbResultCache.setResult(v.getName(), sdf.format(new Date()) + " -> " + jksbHttpUtils.autoSb(loginCredentials, v.getAddress()));
+            }catch (Exception e){
+                e.printStackTrace();
+            }
         });
     }
 }
