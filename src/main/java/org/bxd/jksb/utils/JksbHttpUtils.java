@@ -1,17 +1,14 @@
 package org.bxd.jksb.utils;
 
+import okhttp3.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,29 +30,124 @@ public class JksbHttpUtils {
 
     private static final String JKSB_URL = "https://jksb.v.zzu.edu.cn/vls6sss/zzujksb.dll/jksb";
 
-    @Autowired
-    private RestTemplateBuilder restTemplateBuilder;
+    private OkHttpClient okHttpClient = new OkHttpClient.Builder()
+            //添加TLSv1、TLSv1.1、TLSv1.2、TLSv1.3支持
+            .connectionSpecs(Arrays.asList(ConnectionSpec.COMPATIBLE_TLS))
+            .build();
 
     public Map<String, String> login(String usr, String pwd) {
-        return getLoginCredentials(restTemplateBuilder.build().postForObject(LOGIN_URL, createLoginHttpEntity(usr, pwd), String.class));
+        final Map<String, String> resultMap = new HashMap<>();
+        Request request = new Request.Builder()
+                .url(LOGIN_URL)
+                .post(createLoginRequestBody(usr,pwd))
+                .build();
+        Call call = okHttpClient.newCall(request);
+        try {
+            Response response = call.execute();
+            log.info("Date:{}, Method:Login, Code:{}, Message:{}", new Date(), response.code(), response.message());
+            String body = response.body().string();
+            log.info("onResponse: " + body);
+            resultMap.putAll(getLoginCredentials(body));
+        } catch (IOException e) {
+            log.warn("onFailure:" + e.getMessage());
+        }
+        return resultMap;
     }
 
     public String autoSelectSbType(Map<String, String> map) {
-        String result = restTemplateBuilder.build().postForObject(JKSB_URL, createSbTypeHttpEntity(map.get(PTOPID), map.get(SID)), String.class);
-        return result;
+        final StringBuilder result = new StringBuilder();
+        Request request = new Request.Builder()
+                .url(JKSB_URL)
+                .post(createSbTypRequestBody(map.get(PTOPID), map.get(SID)))
+                .build();
+        Call call = okHttpClient.newCall(request);
+        try {
+            Response response = call.execute();
+            log.info("Date:{}, Method:autoSelectSbType, Code:{}, Message:{}", new Date(), response.code(), response.message());
+            String body = response.body().string();
+            log.info("onResponse: " + body);
+            result.append(body);
+        } catch (IOException e) {
+            log.warn("onFailure:" + e.getMessage());
+        }
+        return result.toString();
     }
 
     public String autoSb(Map<String, String> map, String address) {
-        String html = restTemplateBuilder.build().postForObject(JKSB_URL, createJksbHttpEntity(map.get(PTOPID), map.get(SID), address), String.class);
-        log.info("Date:{}, AutoJksb Result Html: {}", new Date(), html);
-        String result = null;
+        final StringBuilder result = new StringBuilder();
+        Request request = new Request.Builder()
+                .url(JKSB_URL)
+                .post(createJksbRequestBody(map.get(PTOPID), map.get(SID), address))
+                .build();
+        Call call = okHttpClient.newCall(request);
         try {
-            result = getReturnInfo(html);
-        } catch (Exception e) {
-            log.warn("Exception: ", e.getMessage());
-            result = html;
+            Response response = call.execute();
+            log.info("Date:{}, Method:autoSb, Code:{}, Message:{}", new Date(), response.code(), response.message());
+            String body = response.body().string();
+            log.info("onResponse: " + body);
+            try {
+                result.append(getReturnInfo(body));
+            } catch (Exception e) {
+                result.append(body);
+            }
+        } catch (IOException e) {
+            log.warn("onFailure:" + e.getMessage());
         }
-        return result;
+        return result.toString();
+    }
+
+    private RequestBody createSbTypRequestBody(String ptopid, String sid) {
+        return new FormBody.Builder()
+                .add("day6", "b")
+                .add("did", "1")
+                .add("door","")
+                .add("men6","")
+                .add("ptopid", ptopid)
+                .add("sid", sid)
+                .build();
+    }
+
+    private RequestBody createLoginRequestBody(String usr, String pwd) {
+        return new FormBody.Builder()
+                .add("uid", usr)
+                .add("upw", pwd)
+                .build();
+    }
+
+    private RequestBody createJksbRequestBody(String ptopid, String sid, String address) {
+        return new FormBody.Builder()
+                .add("myvs_1", "否")
+                .add("myvs_2", "否")
+                .add("myvs_3", "否")
+                .add("myvs_4", "否")
+                .add("myvs_5", "否")
+                .add("myvs_6", "否")
+                .add("myvs_7", "否")
+                .add("myvs_8", "否")
+                .add("myvs_9", "否")
+                .add("myvs_10", "否")
+                .add("myvs_11", "否")
+                .add("myvs_12", "否")
+                .add("myvs_13a", "41")
+                .add("myvs_13b", "4101")
+                .add("myvs_13c", address)
+                .add("myvs_14", "否")
+                .add("myvs_14b", "")
+                .add("myvs_15", "否")
+                .add("myvs_16", "其他(请说明)")
+                .add("myvs_16b", "")
+                .add("myvs_17", "D")
+                .add("myvs_18", "A")
+                .add("did", "2")
+                .add("door", "")
+                .add("day6", "b")
+                .add("men6", "a")
+                .add("sheng6", "")
+                .add("shi6", "")
+                .add("fun3", "")
+                .add("ptopid", ptopid)
+                .add("sid", sid)
+                .build();
     }
 
     private Map<String, String> getLoginCredentials(String text) {
@@ -69,18 +161,6 @@ public class JksbHttpUtils {
         return temp;
     }
 
-    private String getReturnInfo(String text) {
-        Document d = Jsoup.parse(text);
-        char[] a = d.body().getElementById("bak_0").toString().toCharArray();
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < a.length; i++) {
-            if (isChinese(a[i])) {
-                sb.append(a[i]);
-            }
-        }
-        return sb.toString();
-    }
-
     private boolean isChinese(char c) {
         Character.UnicodeBlock ub = Character.UnicodeBlock.of(c);
         if (ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS || ub == Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS
@@ -92,57 +172,15 @@ public class JksbHttpUtils {
         return false;
     }
 
-    private HttpEntity createSbTypeHttpEntity(String ptopid, String sid) {
-        MultiValueMap<String, String> requestMap= new LinkedMultiValueMap<String, String>();
-        requestMap.add("day6", "b");
-        requestMap.add("did", "1");
-        requestMap.add("door","");
-        requestMap.add("men6","");
-        requestMap.add("ptopid", ptopid);
-        requestMap.add("sid", sid);
-        return new HttpEntity(requestMap,null);
-    }
-
-    private HttpEntity createLoginHttpEntity(String usr, String pwd) {
-        MultiValueMap<String, String> requestMap= new LinkedMultiValueMap<String, String>();
-        requestMap.add("uid", usr);
-        requestMap.add("upw", pwd);
-        return new HttpEntity(requestMap,null);
-    }
-
-    private HttpEntity createJksbHttpEntity(String ptopid, String sid, String address) {
-        MultiValueMap<String, String> requestMap= new LinkedMultiValueMap<String, String>();
-        requestMap.add("myvs_1", "否");
-        requestMap.add("myvs_2", "否");
-        requestMap.add("myvs_3", "否");
-        requestMap.add("myvs_4", "否");
-        requestMap.add("myvs_5", "否");
-        requestMap.add("myvs_6", "否");
-        requestMap.add("myvs_7", "否");
-        requestMap.add("myvs_8", "否");
-        requestMap.add("myvs_9", "否");
-        requestMap.add("myvs_10", "否");
-        requestMap.add("myvs_11", "否");
-        requestMap.add("myvs_12", "否");
-        requestMap.add("myvs_13a", "41");
-        requestMap.add("myvs_13b", "4101");
-        requestMap.add("myvs_13c", address);
-        requestMap.add("myvs_14", "否");
-        requestMap.add("myvs_14b", "");
-        requestMap.add("myvs_15", "否");
-        requestMap.add("myvs_16", "其他(请说明)");
-        requestMap.add("myvs_16b", "");
-        requestMap.add("myvs_17", "D");
-        requestMap.add("myvs_18", "A");
-        requestMap.add("did", "2");
-        requestMap.add("door", "");
-        requestMap.add("day6", "b");
-        requestMap.add("men6", "a");
-        requestMap.add("sheng6", "");
-        requestMap.add("shi6", "");
-        requestMap.add("fun3", "");
-        requestMap.add("ptopid", ptopid);
-        requestMap.add("sid", sid);
-        return new HttpEntity(requestMap,null);
+    private String getReturnInfo(String text) {
+        Document d = Jsoup.parse(text);
+        char[] a = d.body().getElementById("bak_0").toString().toCharArray();
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < a.length; i++) {
+            if (isChinese(a[i])) {
+                sb.append(a[i]);
+            }
+        }
+        return sb.toString();
     }
 }

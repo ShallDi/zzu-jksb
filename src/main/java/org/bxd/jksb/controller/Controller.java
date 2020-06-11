@@ -1,6 +1,7 @@
 package org.bxd.jksb.controller;
 
 import org.bxd.jksb.cache.SbResultCache;
+import org.bxd.jksb.service.AutoJksbService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,6 +15,14 @@ public class Controller {
 
     @Autowired
     private SbResultCache sbResultCache;
+
+    @Autowired
+    private AutoJksbService autoJksbService;
+
+    @RequestMapping("/sb_now")
+    public List<String> sbNow() {
+        return autoJksbService.autoSb();
+    }
 
     @RequestMapping("/{user}")
     public String getResult(@PathVariable("user") String user) {
