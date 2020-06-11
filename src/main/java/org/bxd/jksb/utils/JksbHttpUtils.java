@@ -71,7 +71,7 @@ public class JksbHttpUtils {
 
     private String getReturnInfo(String text) {
         Document d = Jsoup.parse(text);
-        char[] a = d.body().getElementById("bak_0").child(1).child(1).child(1).child(1).toString().toCharArray();
+        char[] a = d.body().getElementById("bak_0").toString().toCharArray();
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < a.length; i++) {
             if (isChinese(a[i])) {

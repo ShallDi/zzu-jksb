@@ -10,7 +10,7 @@
     </parent>
     <groupId>org.bxd</groupId>
     <artifactId>jksb</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0-RELEASE</version>
     <name>jksb</name>
     <description>auto jksb for zzu</description>
 
