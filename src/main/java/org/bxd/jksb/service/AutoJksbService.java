@@ -34,8 +34,7 @@ public class AutoJksbService {
 
     @PostConstruct
     private void init() {
-        userCache.setUser("hrx", new User("hrx", "201812272013584", "04190024", "河南省郑州市郑州大学新校区松园1号楼522宿舍"));
-        userCache.setUser("bhb", new User("bhb", "201722362013943", "10120356", "科学大道100号"));
+        // add User
     }
 
     @Scheduled(cron = "0 34 4 * * ?")
