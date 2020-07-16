@@ -1,6 +1,6 @@
 package org.bxd.jksb.cache;
 
-import org.bxd.jksb.pojo.User;
+import org.bxd.jksb.entity.User;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
