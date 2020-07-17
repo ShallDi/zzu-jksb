@@ -35,7 +35,7 @@ public class JksbHttpUtils {
             .connectionSpecs(Arrays.asList(ConnectionSpec.COMPATIBLE_TLS))
             .build();
 
-    public Map<String, String> login(String usr, String pwd) {
+    public Map<String, String> login(String name, String usr, String pwd) {
         final Map<String, String> resultMap = new HashMap<>();
         Request request = new Request.Builder()
                 .url(LOGIN_URL)
@@ -44,17 +44,17 @@ public class JksbHttpUtils {
         Call call = okHttpClient.newCall(request);
         try {
             Response response = call.execute();
-            log.info("Date:{}, Method:Login, Code:{}, Message:{}", new Date(), response.code(), response.message());
-            String body = response.body().string();
-            log.info("onResponse: " + body);
+            log.info("Date:{}, Method: login, Code:{}, Message:{}", new Date(), response.code(), response.message());
+            String body = getReturnInfo(response.body().string());
+            recordResponseInfoLog(name, body);
             resultMap.putAll(getLoginCredentials(body));
         } catch (IOException e) {
-            log.warn("onFailure:" + e.getMessage());
+            recordResponseWarnLog(name, e.getMessage());
         }
         return resultMap;
     }
 
-    public String autoSelectSbType(Map<String, String> map) {
+    public String autoSelectSbType(String name, Map<String, String> map) {
         final StringBuilder result = new StringBuilder();
         Request request = new Request.Builder()
                 .url(JKSB_URL)
@@ -63,17 +63,17 @@ public class JksbHttpUtils {
         Call call = okHttpClient.newCall(request);
         try {
             Response response = call.execute();
-            log.info("Date:{}, Method:autoSelectSbType, Code:{}, Message:{}", new Date(), response.code(), response.message());
-            String body = response.body().string();
-            log.info("onResponse: " + body);
+            log.info("Date:{}, Method: autoSelectSbType, Code:{}, Message:{}", new Date(), response.code(), response.message());
+            String body = getReturnInfo(response.body().string());
+            recordResponseInfoLog(name, body);
             result.append(body);
         } catch (IOException e) {
-            log.warn("onFailure:" + e.getMessage());
+            recordResponseWarnLog(name, e.getMessage());
         }
         return result.toString();
     }
 
-    public String autoSb(Map<String, String> map, String address) {
+    public String autoSb(String name, Map<String, String> map, String address) {
         final StringBuilder result = new StringBuilder();
         Request request = new Request.Builder()
                 .url(JKSB_URL)
@@ -82,18 +82,22 @@ public class JksbHttpUtils {
         Call call = okHttpClient.newCall(request);
         try {
             Response response = call.execute();
-            log.info("Date:{}, Method:autoSb, Code:{}, Message:{}", new Date(), response.code(), response.message());
-            String body = response.body().string();
-            log.info("onResponse: " + body);
-            try {
-                result.append(getReturnInfo(body));
-            } catch (Exception e) {
-                result.append(body);
-            }
+            log.info("Date:{}, Method: autoSb, Code:{}, Message:{}", new Date(), response.code(), response.message());
+            String body = getReturnInfo(response.body().string());
+            recordResponseInfoLog(name, body);
+            result.append(body);
         } catch (IOException e) {
-            log.warn("onFailure:" + e.getMessage());
+            recordResponseWarnLog(name, e.getMessage());
         }
         return result.toString();
+    }
+
+    private void recordResponseInfoLog(String name, String info) {
+        log.info("Date: {}, User: {}, onResponse: {}", new Date(), name, info);
+    }
+
+    private void recordResponseWarnLog(String name, String info) {
+        log.info("Date: {}, User: {}, onFailure: {}", new Date(), name, info);
     }
 
     private RequestBody createSbTypRequestBody(String ptopid, String sid) {
