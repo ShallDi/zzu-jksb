@@ -13,10 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.*;
 
 @Component
 @EnableScheduling
@@ -33,30 +30,29 @@ public class AutoJksbService {
     @Autowired
     private JksbHttpUtils jksbHttpUtils;
 
-    private static final ExecutorService EXECUTOR_SERVICE = Executors.newFixedThreadPool(5);
+    private static final ExecutorService EXECUTOR_SERVICE = Executors.newFixedThreadPool(3);
 
     private static final ThreadLocal<SimpleDateFormat> sdf = ThreadLocal.withInitial(() -> new SimpleDateFormat("yyyy-MM-dd HH:mm"));
 
     @Scheduled(cron = "0 23 6 * * ?")
-    public List<String> autoSb() {
-        final List<String> count = new CopyOnWriteArrayList<>();
-        userRepository.findAll().forEach(u -> EXECUTOR_SERVICE.submit(() -> execute(u, count)));
-        return count;
+    public void autoSb() {
+        userRepository.findAll().forEach(u -> EXECUTOR_SERVICE.submit(() -> execute(u)));
     }
 
     private long randomSleepTime() {
-        return (new Random().nextInt(30)) * 1000 * 60;
+        return (new Random().nextInt(40)) * 1000 * 60;
     }
 
-    private void execute(User v, List<String> count) {
+    private void execute(User v) {
         try {
-            Thread.sleep(randomSleepTime());
+            long sleepTime = randomSleepTime();
+            log.info("User: {}， jksb delay execute at {}.", v.getName(), sdf.get().format(new Date(new Date().getTime() + sleepTime)));
+            Thread.sleep(sleepTime);
             Map<String, String> loginCredentials =  jksbHttpUtils.login(v.getName(), v.getAccount(), v.getPassword());
             jksbHttpUtils.autoSelectSbType(v.getName(), loginCredentials);
-            sbResultCache.setResult(v.getName(), sdf.get().format(new Date()) + " -> " + jksbHttpUtils.autoSb(loginCredentials, v.getAddress()));
-            count.add(v.getName());
+            sbResultCache.setResult(v.getName(), sdf.get().format(new Date()) + " -> " + jksbHttpUtils.autoSb(v.getName(), loginCredentials, v.getAddress()));
         }catch (Exception e){
-            log.warn("Thread execute exception, message: {}", e.getMessage());
+            log.warn("User: {}, Thread execute exception, message: {}", v.getName(), e);
         }
     }
 }

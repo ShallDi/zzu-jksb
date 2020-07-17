@@ -3,6 +3,7 @@ package org.bxd.jksb.utils;
 import okhttp3.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -44,12 +45,12 @@ public class JksbHttpUtils {
         Call call = okHttpClient.newCall(request);
         try {
             Response response = call.execute();
-            log.info("Date:{}, Method: login, Code:{}, Message:{}", new Date(), response.code(), response.message());
-            String body = getReturnInfo(response.body().string());
-            recordResponseInfoLog(name, body);
-            resultMap.putAll(getLoginCredentials(body));
+            log.info("Date: {}, Method: login, Code:{}, Message:{}", new Date(), response.code(), response.message());
+            resultMap.putAll(getLoginCredentials(response.body().string()));
+            String loginInfo = PTOPID.concat(": ").concat(resultMap.get(PTOPID)).concat(", ").concat(SID).concat(": ").concat(resultMap.get(SID));
+            recordResponseInfoLog(name, loginInfo);
         } catch (IOException e) {
-            recordResponseWarnLog(name, e.getMessage());
+            recordResponseWarnLog(name, e);
         }
         return resultMap;
     }
@@ -63,12 +64,12 @@ public class JksbHttpUtils {
         Call call = okHttpClient.newCall(request);
         try {
             Response response = call.execute();
-            log.info("Date:{}, Method: autoSelectSbType, Code:{}, Message:{}", new Date(), response.code(), response.message());
+            log.info("Date: {}, Method: autoSelectSbType, Code:{}, Message:{}", new Date(), response.code(), response.message());
             String body = getReturnInfo(response.body().string());
             recordResponseInfoLog(name, body);
             result.append(body);
         } catch (IOException e) {
-            recordResponseWarnLog(name, e.getMessage());
+            recordResponseWarnLog(name, e);
         }
         return result.toString();
     }
@@ -82,22 +83,22 @@ public class JksbHttpUtils {
         Call call = okHttpClient.newCall(request);
         try {
             Response response = call.execute();
-            log.info("Date:{}, Method: autoSb, Code:{}, Message:{}", new Date(), response.code(), response.message());
+            log.info("Date: {}, Method: autoSb, Code:{}, Message:{}", new Date(), response.code(), response.message());
             String body = getReturnInfo(response.body().string());
             recordResponseInfoLog(name, body);
             result.append(body);
         } catch (IOException e) {
-            recordResponseWarnLog(name, e.getMessage());
+            recordResponseWarnLog(name, e);
         }
         return result.toString();
     }
 
-    private void recordResponseInfoLog(String name, String info) {
-        log.info("Date: {}, User: {}, onResponse: {}", new Date(), name, info);
+    private void recordResponseInfoLog(String name, String e) {
+        log.info("Date: {}, User: {}, onResponse: {}", new Date(), name, e);
     }
 
-    private void recordResponseWarnLog(String name, String info) {
-        log.info("Date: {}, User: {}, onFailure: {}", new Date(), name, info);
+    private void recordResponseWarnLog(String name, Exception e) {
+        log.info("Date: {}, User: {}, onFailure: {}", new Date(), name, e);
     }
 
     private RequestBody createSbTypRequestBody(String ptopid, String sid) {
@@ -115,6 +116,7 @@ public class JksbHttpUtils {
         return new FormBody.Builder()
                 .add("uid", usr)
                 .add("upw", pwd)
+                .add("ver6", "test")
                 .build();
     }
 
@@ -178,7 +180,11 @@ public class JksbHttpUtils {
 
     private String getReturnInfo(String text) {
         Document d = Jsoup.parse(text);
-        char[] a = d.body().getElementById("bak_0").toString().toCharArray();
+        Element bak0 = d.body().getElementById("bak_0");
+        if (bak0 == null || "".equals(bak0.toString())) {
+            bak0 = d.body();
+        }
+        char[] a =bak0.toString().toCharArray();
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < a.length; i++) {
             if (isChinese(a[i])) {

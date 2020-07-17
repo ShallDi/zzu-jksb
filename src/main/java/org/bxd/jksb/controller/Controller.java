@@ -22,8 +22,9 @@ public class Controller {
     private AutoJksbService autoJksbService;
 
     @RequestMapping("/sb_now")
-    public List<String> sbNow() {
-        return autoJksbService.autoSb();
+    public String sbNow() {
+        autoJksbService.autoSb();
+        return "Start Auto Jksb Now...";
     }
 
     @RequestMapping("/{user}")
@@ -40,11 +41,11 @@ public class Controller {
     }
 
     @RequestMapping("/{user}/all")
-    public ResponseEntity getResultAll(@PathVariable("user") String user) {
+    public ResponseEntity<?> getResultAll(@PathVariable("user") String user) {
         List<String> temp = sbResultCache.get(user);
         if (temp == null) {
-            return new ResponseEntity("No User", HttpStatus.OK);
+            return new ResponseEntity<>("No User", HttpStatus.OK);
         }
-        return new ResponseEntity(temp, HttpStatus.OK);
+        return new ResponseEntity<>(temp, HttpStatus.OK);
     }
 }
