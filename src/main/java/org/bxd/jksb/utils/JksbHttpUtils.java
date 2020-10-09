@@ -36,7 +36,7 @@ public class JksbHttpUtils {
             .connectionSpecs(Arrays.asList(ConnectionSpec.COMPATIBLE_TLS))
             .build();
 
-    public Map<String, String> login(String name, String usr, String pwd) {
+    public Map<String, String> login(String name, String usr, String pwd) throws Exception {
         final Map<String, String> resultMap = new HashMap<>();
         Request request = new Request.Builder()
                 .url(LOGIN_URL)
@@ -45,7 +45,7 @@ public class JksbHttpUtils {
         Call call = okHttpClient.newCall(request);
         try {
             Response response = call.execute();
-            log.info("Date: {}, Method: login, Code:{}, Message:{}", new Date(), response.code(), response.message());
+            log.info("Date: {}, Method: login, Code: {}, Message: {}", new Date(), response.code(), response.message());
             resultMap.putAll(getLoginCredentials(response.body().string()));
             String loginInfo = PTOPID.concat(": ").concat(resultMap.get(PTOPID)).concat(", ").concat(SID).concat(": ").concat(resultMap.get(SID));
             recordResponseInfoLog(name, loginInfo);
@@ -55,7 +55,7 @@ public class JksbHttpUtils {
         return resultMap;
     }
 
-    public String autoSelectSbType(String name, Map<String, String> map) {
+    public String autoSelectSbType(String name, Map<String, String> map) throws Exception {
         final StringBuilder result = new StringBuilder();
         Request request = new Request.Builder()
                 .url(JKSB_URL)
@@ -64,7 +64,7 @@ public class JksbHttpUtils {
         Call call = okHttpClient.newCall(request);
         try {
             Response response = call.execute();
-            log.info("Date: {}, Method: autoSelectSbType, Code:{}, Message:{}", new Date(), response.code(), response.message());
+            log.info("Date: {}, Method: autoSelectSbType, Code: {}, Message: {}", new Date(), response.code(), response.message());
             String body = getReturnInfo(response.body().string());
             recordResponseInfoLog(name, body);
             result.append(body);
@@ -74,7 +74,7 @@ public class JksbHttpUtils {
         return result.toString();
     }
 
-    public String autoSb(String name, Map<String, String> map, String address) {
+    public String autoSb(String name, Map<String, String> map, String address) throws Exception {
         final StringBuilder result = new StringBuilder();
         Request request = new Request.Builder()
                 .url(JKSB_URL)
@@ -83,7 +83,7 @@ public class JksbHttpUtils {
         Call call = okHttpClient.newCall(request);
         try {
             Response response = call.execute();
-            log.info("Date: {}, Method: autoSb, Code:{}, Message:{}", new Date(), response.code(), response.message());
+            log.info("Date: {}, Method: autoSb, Code: {}, Message: {}", new Date(), response.code(), response.message());
             String body = getReturnInfo(response.body().string());
             recordResponseInfoLog(name, body);
             result.append(body);
@@ -97,8 +97,9 @@ public class JksbHttpUtils {
         log.info("Date: {}, User: {}, onResponse: {}", new Date(), name, e);
     }
 
-    private void recordResponseWarnLog(String name, Exception e) {
-        log.info("Date: {}, User: {}, onFailure: {}", new Date(), name, e);
+    private void recordResponseWarnLog(String name, Exception e) throws Exception {
+        log.error("Date: {}, User: {}, onFailure: {}", new Date(), name, e);
+        throw new Exception("Error, info: " + e.getMessage());
     }
 
     private RequestBody createSbTypRequestBody(String ptopid, String sid) {

@@ -2,6 +2,7 @@ package org.bxd.jksb.controller;
 
 import org.bxd.jksb.cache.SbResultCache;
 import org.bxd.jksb.service.AutoJksbService;
+import org.bxd.jksb.service.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
