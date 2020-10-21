@@ -1,31 +1,13 @@
 package org.bxd.jksb;
 
-import org.bxd.jksb.entity.User;
-import org.bxd.jksb.repository.UserRepository;
-import org.bxd.jksb.service.AutoJksbService;
-import org.bxd.jksb.utils.JksbHttpUtils;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.HttpEntity;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 class JksbApplicationTests {
     public static void main(String[] args) {
-        List a = new ArrayList<>();
+        test("22g4");
+    }
 
-        a.add(null);
-        a.add(null);
-        System.out.println(a.size());
+    private static void test(String name) {
+
+        System.out.println(name.replaceAll("^(\\w{" + (name.length() / 2 - 2 )+ "})\\w{4}", "$1****"));
 
     }
 

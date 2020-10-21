@@ -38,7 +38,7 @@ public class MailService {
             helper.setSubject(sdf.format(new Date()) + " " + JKSB_TITLE);
             helper.setFrom(senderMail);
             helper.setTo(receiverMail);
-            helper.setText(content,true);
+            helper.setText(formatContent(title, content),true);
             mailSender.send(message);
             log.info("Send message success");
         } catch (MessagingException e) {
