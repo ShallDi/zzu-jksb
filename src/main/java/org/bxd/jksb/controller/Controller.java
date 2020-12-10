@@ -2,6 +2,7 @@ package org.bxd.jksb.controller;
 
 import org.bxd.jksb.cache.SbResultCache;
 import org.bxd.jksb.service.AutoJksbService;
+import org.bxd.jksb.service.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,17 +10,25 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Date;
 import java.util.List;
 
 @RequestMapping("/")
 @RestController
 public class Controller {
 
-    @Autowired
-    private SbResultCache sbResultCache;
+    private final SbResultCache sbResultCache;
+
+    private final AutoJksbService autoJksbService;
+
+    private final MailService mailService;
 
     @Autowired
-    private AutoJksbService autoJksbService;
+    public Controller(SbResultCache sbResultCache, AutoJksbService autoJksbService, MailService mailService) {
+        this.sbResultCache = sbResultCache;
+        this.autoJksbService = autoJksbService;
+        this.mailService = mailService;
+    }
 
     @RequestMapping("/sb_now")
     public String sbNow() {
@@ -47,5 +56,11 @@ public class Controller {
             return new ResponseEntity<>("No User", HttpStatus.OK);
         }
         return new ResponseEntity<>(temp, HttpStatus.OK);
+    }
+
+    @RequestMapping("/test/sendMail")
+    public String testSendMail() {
+        mailService.sendMail("test", new Date() + " test");
+        return "SUCCESS";
     }
 }

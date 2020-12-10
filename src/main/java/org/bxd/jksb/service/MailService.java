@@ -28,8 +28,12 @@ public class MailService {
     @Value("${spring.mail.username}")
     private String senderMail;
 
+    private final JavaMailSender mailSender;
+
     @Autowired
-    private JavaMailSender mailSender;
+    public MailService(JavaMailSender mailSender) {
+        this.mailSender = mailSender;
+    }
 
     public void sendMail(String title, String content) {
         MimeMessage message = mailSender.createMimeMessage();
